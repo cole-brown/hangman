@@ -167,12 +167,13 @@ http://www.python.org/download/releases/3.3.0/
 
 *** done python indent -> 3 spaces
     closed: [2012-10-04 Thu 15:05]
-*** git repo
+*** done git repo
+    closed: [2012-10-04 Thu 16:49]
 
 ignore 
   factual/
   __pycache__/
-  *.pyc
+  python basic class template thing I made
 
 *** started strategy outline
 
@@ -220,9 +221,115 @@ Output == good
 File reading first. Then dump into set?
   - yes.
 
-*** 003: Get letter guessing in place
+*** done 003: Get basic letter guessing in place
+    closed: [2012-10-04 Thu 18:33]
 
 Pick next letter based on what's already been guessed.
+
+Uh... I need a game runner first...
+  done.
+
+And... this is working.
+  -------; score=1; status=KEEP_GUESSING
+  ---T---; score=2; status=KEEP_GUESSING
+  -A-T-A-; score=3; status=KEEP_GUESSING
+  -A-T-A-; score=4; status=KEEP_GUESSING
+  -A-T-A-; score=5; status=KEEP_GUESSING
+  -A-T-A-; score=6; status=KEEP_GUESSING
+  -A-T-A-; score=7; status=KEEP_GUESSING
+  -A-T-A-; score=25; status=GAME_LOST
+  FACTUAL = 25
+
+*** done 004: game running script
+    closed: [2012-10-04 Thu 17:42]
+
+Make it so!
+
+run function like so:
+  public int run(HangmanGame game, GuessingStrategy strategy)
+
+*** todo 005: move DBG() to separate file
+
+Make it DBG(printable, prefix="", printFlag=True)
+
+*** done 006: word finding
+    closed: [2012-10-04 Thu 21:03]
+
+Use guessedSoFar to figure out word candidates.
+
+Probably should regex it.
+
+Pretty stupid regex builder, but it works. We'll see if we need speed later.
+
+*** done 007: smarter letter guesser
+    closed: [2012-10-04 Thu 21:06]
+
+build letter frequency info from possible word list
+
+use it instead of common english letters
+
+Hey. I didn't lose this time!
+
+  $ ./hangman.py
+  1.7 MiB
+  Possibles: 23208
+  RUBEOLA
+  GUESS: E
+  -------; score=1; status=KEEP_GUESSING
+  Possibles: 23208
+  RUBEOLA
+  GUESS: S
+  -------; score=2; status=KEEP_GUESSING
+  Possibles: 23208
+  RUBEOLA
+  GUESS: I
+  -------; score=3; status=KEEP_GUESSING
+  Possibles: 23208
+  RUBEOLA
+  GUESS: A
+  -A---A-; score=4; status=KEEP_GUESSING
+  Possibles: 300
+  LASHKAR
+  GUESS: L
+  -A---AL; score=5; status=KEEP_GUESSING
+  Possibles: 46
+  LACUNAL
+  GUESS: T
+  -A-T-AL; score=6; status=KEEP_GUESSING
+  Possibles: 7
+  LACTEAL
+  GUESS: C
+  -ACT-AL; score=7; status=KEEP_GUESSING
+  Possibles: 3
+  LACTEAL
+  GUESS: U
+  -ACTUAL; score=8; status=KEEP_GUESSING
+  Possibles: 2
+  TACTUAL
+  GUESS: F
+  FACTUAL; score=9; status=GAME_WON
+  FACTUAL = 9
+
+*** done 008: smarter word finding
+    closed: [2012-10-04 Thu 21:34]
+
+Reject words containing failed guesses
+
+getIncorrectlyGuessedLetters()
+regex set...
+  [badletters]+
+
+Any matches, throw out.
+
+Rejecting based on incorrect letters
+  - may need to update for incorrect words when word guessing goes in
+    - been TODO'd in code
+
+*** 009: word guessing
+
+pick a word from possibles
+
+guess it
 
 *** 999: Modify to work for multiple games
 
