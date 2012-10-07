@@ -248,7 +248,8 @@ Make it so!
 run function like so:
   public int run(HangmanGame game, GuessingStrategy strategy)
 
-*** todo 005: move DBG() to separate file
+*** done 005: move DBG() to separate file
+    closed: [2012-10-05 Fri 15:16]
 
 Make it DBG(printable, prefix="", printFlag=True)
 
@@ -325,13 +326,176 @@ Rejecting based on incorrect letters
   - may need to update for incorrect words when word guessing goes in
     - been TODO'd in code
 
-*** 009: word guessing
+*** done 009: BUG: wrong letter regex
+    closed: [2012-10-05 Fri 15:39]
 
-pick a word from possibles
+regex to remove words containing incorrect letter choice bugged
+  - but working partially... it removes some.
 
-guess it
+  $ ./hangman.py 
+  1.7 MiB
+  Possibles: 23208
+  Pick: BOOZIERset()
+  GUESS: E
+  -------; score=1; status=KEEP_GUESSING
+  [E]+
+  Possibles: 22401
+  Pick: BOOZIER{'E'}
+  GUESS: S
+  -------; score=2; status=KEEP_GUESSING
+  [ES]+
+  Possibles: 19745
+  Pick: BOOZIER{'E', 'S'}
+  GUESS: I
+  -------; score=3; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 19241
+  Pick: BOOZIER{'E', 'I', 'S'}
+  GUESS: A
+  -A---A-; score=4; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 279
+  Pick: VATICAL{'E', 'I', 'S'}
+  GUESS: L
+  -A---AL; score=5; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 45
+  Pick: VATICAL{'E', 'I', 'S'}
+  GUESS: T
+  -A-T-AL; score=6; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 7
+  Pick: CANTHAL{'E', 'I', 'S'}
+  GUESS: C
+  -ACT-AL; score=7; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 3
+  Pick: LACTEAL{'E', 'I', 'S'}
+  GUESS: U
+  -ACTUAL; score=8; status=KEEP_GUESSING
+  [EIS]+
+  Possibles: 2
+  Pick: TACTUAL{'E', 'I', 'S'}
+  GUESS: F
+  FACTUAL; score=9; status=GAME_WON
+  FACTUAL = 9
 
-*** 999: Modify to work for multiple games
+Ah, match(). Don't use match. Use search().
+
+*** done 010: word guessing
+    closed: [2012-10-05 Fri 16:51]
+
+Currently only guesses at words if it's possible to win that way.
+
+*** done 011: command line optinos
+    closed: [2012-10-05 Fri 18:00]
+
+ - location of dictionary
+ - list of words
+ - max guesses
+
+$ ./hangman.py -h
+usage: hangman.py [-h] [-g GUESSES] filename word [word ...]
+
+positional arguments:
+  filename              read dictionary in from file
+  word                  list of words to play hangman on
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -g GUESSES, --guesses GUESSES
+                        max number of wrong guesses
+
+*** done 012: Modify to work for multiple games
+    closed: [2012-10-05 Fri 18:47]
+
+Reuse strategy.
+
+Also:
+- average score
+
+*** done 013: test on words
+    closed: [2012-10-05 Fri 18:55]
+
+Their words:
+   COMAKER = 25 (was not able to guess the word before making more than 5 mistakes)
+   CUMULATE = 9
+   ERUPTIVE = 5
+   FACTUAL = 9
+   MONADISM = 8
+   MUS = 25 (was not able to guess the word before making more than 5 mistakes)
+   NAGGING = 7
+   OSES = 5
+   REMEMBERED = 5
+   SPODUMENES = 4
+   STEREOISOMERS = 2
+   TOXICS = 11
+   TRICHROMATS = 5
+   TRIOSE = 5
+   UNIFORMED = 5
+   average: 8.666666666
+
+$ ./hangman.py words.txt COMAKER CUMULATE ERUPTIVE FACTUAL MONADISM MUS NAGGING OSES REMEMBERED SPODUMENES STEREOISOMERS TOXICS TRICHROMATS TRIOSE UNIFORMED
+   COMAKER = 12
+   CUMULATE = 9
+   ERUPTIVE = 8
+   FACTUAL = 10
+   MONADISM = 6
+   MUS = 25
+   NAGGING = 5
+   OSES = 4
+   REMEMBERED = 5
+   SPODUMENES = 4
+   STEREOISOMERS = 3
+   TOXICS = 7
+   TRICHROMATS = 5
+   TRIOSE = 7
+   UNIFORMED = 10
+   average: 7.999999999999999
+
+Yay. 0.77777777777 better!
+
+*** done 014: timing
+    closed: [2012-10-06 Sat 20:47]
+
+Seems a bit slow. 
+
+15 words:
+  real	0m6.904s
+  user	0m6.815s
+  sys	0m0.086s
+
+1000 would take... half an hour-ish.
+
+Get timing on function level...
+  util.Timer is ready for action!
+
+Now start using it.
+
+  $ time ./hangman.py words.txt MUS
+  Namespace(filename='words.txt', guesses=5, verbose=False, word=['MUS'])
+  Strategy init took 0.191967964 sec.
+  Strategery took 0.197170019 sec.
+  Strategery took 0.010432959 sec.
+  Strategery took 0.008641958 sec.
+  Strategery took 0.007431984 sec.
+  Strategery took 0.006187916 sec.
+  Strategery took 0.006028175 sec.
+  Strategery took 0.005857944 sec.
+  Game took 0.242306948 sec.
+  MUS = 25
+  average: 25.0
+  Total: 0.260428905 sec.
+
+So, the first guess takes way too long... 75% of the run is the first guess.
+
+But the timing works, so #014 is done.
+
+*** 015: Faster strategy
+
+
+
+*** 999:
 
 * example
 

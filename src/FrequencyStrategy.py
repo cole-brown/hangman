@@ -12,12 +12,15 @@ if __name__ == '__main__':
    from GuessLetter import GuessLetter
    from GuessWord import GuessWord
    from HangmanGame import HangmanGame
+   import util
 else:
    from src.GuessLetter import GuessLetter
    from src.GuessWord import GuessWord
    from src.HangmanGame import HangmanGame
+   from src import util
 
 # CONSTANTS
+DEBUG = False # TODO True for now
 
 #===============================================================================
 # CLASS
@@ -36,7 +39,6 @@ class FrequencyStrategy:
    #-----------------------------------------------------------------------------
    def __init__(self, filepath):
       """Initialize FrequencyStrategy"""
-      #DBG("__init__") # DEBUG
         
       # all the possible words
       self.allWords = set()
@@ -53,25 +55,20 @@ class FrequencyStrategy:
    def nextGuess(self, game):
       """better description""" #TODO
 
-      self.updatePossibleWords(game)
+      with util.Timer() as upTime:
+         self.updatePossibleWords(game)
+      print("  Update took %.09f sec." % upTime.interval) # TODO DBG it
 
       # pick a strategy
-
-      # pick word/letter
-
-      # return that GuessWord/GuessLetter
-
-      # but for now,
-      DBG(self.wordStrategy(game))
-      return GuessLetter(self.letterStrategy(game))
-
-
-   #-----------------------------------------------------------------------------
-   # TODO
-   #-----------------------------------------------------------------------------
-   def foo(self, game):
-      """better description""" #TODO
-      pass
+      # TODO - better decision?
+      # if we can guess all the possible words and not lose, go for it.
+      if len(self.possibleWords) <= game.numWrongGuessesRemaining():
+         return GuessWord(self.wordStrategy(game))
+      else:
+         # Pick a letter.
+         # Any letter.
+         # Not that letter.
+         return GuessLetter(self.letterStrategy(game))
 
 
    #-----------------------------------------------------------------------------
@@ -83,6 +80,7 @@ class FrequencyStrategy:
 
       for word in self.possibleWords:
          if word not in game.getIncorrectlyGuessedWords():
+            util.DBG("GUESS: " + word, DEBUG)
             return word
 
 
@@ -103,7 +101,7 @@ class FrequencyStrategy:
       # pick the first letter that hasn't been guessed
       for letter, _ in letterCount.most_common():
          if letter not in game.getAllGuessedLetters():
-            DBG("GUESS: " + letter)
+            util.DBG("GUESS: " + letter, DEBUG)
             return letter
 
       # TODO: raise error if entire alphabet has been guessed already?
@@ -120,12 +118,12 @@ class FrequencyStrategy:
       # match() only matches at start of string so add a final "$" to make sure
       # it's a whole match and we're not saying "c-t" matches "catapult"
       current.append("$") 
-#      DBG("".join(current))
+#      util.DBG("".join(current), DEBUG)
       for i in range(len(current)):
          if current[i] == HangmanGame.MYSTERY_LETTER:
             # convert to any-letter regex
             current[i] = '[A-Z]{1}'
-#      DBG("".join(current))
+#      util.DBG("".join(current), DEBUG)
       guessRegex = re.compile("".join(current))
 
       # turn incorrectly guessed letters into a regex
@@ -141,17 +139,17 @@ class FrequencyStrategy:
       tempPossibles = self.possibleWords.copy()
 
       # test each word in the possibilites set
-#      DBG("Possibles pre: " + str(len(self.possibleWords)))
+#      util.DBG("Possibles pre: " + str(len(self.possibleWords)), DEBUG)
       for word in tempPossibles:
          # purge words that can't match current guess
          if guessRegex.match(word) == None:
             self.possibleWords.remove(word)
 
          # purge words containing incorrectly guessed letters
-         elif wrongRegex != None and wrongRegex.match(word) != None:
+         elif wrongRegex != None and wrongRegex.search(word) != None:
             self.possibleWords.remove(word)
 
-      DBG("Possibles: " + str(len(self.possibleWords)))
+      util.DBG("Possibles: " + str(len(self.possibleWords)) + " (Guesses Left: " + str(game.numWrongGuessesRemaining()) + ")", DEBUG)
 
 
    #-----------------------------------------------------------------------------
@@ -172,7 +170,7 @@ class FrequencyStrategy:
       exception - IOError if file can't be found/opened/read"""
 
       with open(filepath, 'r') as dictionary: 
-         DBG(pretty_size(os.path.getsize(filepath)))
+         util.DBG(pretty_size(os.path.getsize(filepath)), DEBUG)
 
          # read words file into set
          for line in dictionary:
@@ -193,15 +191,6 @@ def pretty_size(num):
       if num < 1024.0:
          return "%3.1f %s" % (num, x)
       num /= 1024.0
-
-#-------------------------------------------------------------------------------
-# Sometimes you just want to make the voices go away...
-#-------------------------------------------------------------------------------
-DEBUG = True
-def DBG(printable):
-   """No one likes bugs..."""
-   if DEBUG:
-      print(printable)
 
 
 

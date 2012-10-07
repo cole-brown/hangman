@@ -5,31 +5,34 @@
 
 # Python imports
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 # local imports
 from src.HangmanGame import HangmanGame
 from src.GuessLetter import GuessLetter
 from src.GuessWord import GuessWord
 from src.FrequencyStrategy import FrequencyStrategy
+from src import util
 
 # CONSTANTS
-DEBUG = True # TODO - true for now
+DEBUG = False # TODO - true for now
 
 #-----------------------------------------------------------------------------
 # run the game
 #-----------------------------------------------------------------------------
-def run(game, strategy):
+def run(game, strategy, printGameState=True):
    """Runs one game of Hangman with the supplied strategy"""
 
    while game.gameStatus() == HangmanGame.KEEP_GUESSING:
       # ask strategy for a guess
-      guess = strategy.nextGuess(game)
+      with util.Timer() as sTime:
+         guess = strategy.nextGuess(game)
+      print("Strategery took %.09f sec." % sTime.interval) # TODO DBG it
 
       # apply guess to game
       guess.makeGuess(game)
       
-      DBG(game)
+      util.DBG(game, printGameState)
 
    return game.currentScore()
 
@@ -41,25 +44,51 @@ def main(argv=None):
    if argv is None:
       argv = sys.argv
    try:
-      parser = OptionParser()
-#      parser.add_option("-f", "--file", dest="filename",
-#                        help="write report to FILE", metavar="FILE")
+      parser = ArgumentParser()
+      parser.add_argument("filename",
+                          help="read dictionary in from file")
+      parser.add_argument("word", nargs="+", 
+                          help="list of words to play hangman on")
+      parser.add_argument("-g", "--guesses", type=int, default=5,
+                          help="max number of wrong guesses")
+      parser.add_argument("-v", "--verbose", 
+                          action="store_true", default=False,
+                          #action="count", default=0,
+                          help="increase output verbosity")
 #      parser.add_option("-q", "--quiet",
 #                        action="store_false", dest="verbose", default=True,
 #                        help="don't print status messages to stdout")
 
-      (options, args) = parser.parse_args()
+      args = parser.parse_args()
+      print(args) # TODO DEBUG
 
-      # make stuff
-      word = "factual".upper()
-      maxWrong = 5
-      game = HangmanGame(word, maxWrong)
-      strategy = FrequencyStrategy("words.txt")
+      with util.Timer() as sInit:
+         # stuff that can be reused between games
+         strategy = FrequencyStrategy(args.filename)
+         avg = 0.0
+      print("Strategy init took %.09f sec." % sInit.interval) # TODO DBG it
 
-      # run a game!
-      run(game, strategy)
+      with util.Timer() as totalTime:
+         for word in args.word:
+           # make per-game stuff
+           word = word.upper()
+           game = HangmanGame(word, args.guesses)
+           
+           # run a game!
+           with util.Timer() as gTime:
+              run(game, strategy, args.verbose)
+           print("Game took %.09f sec." % gTime.interval) # TODO DBG it
+           
+           # average score update
+           avg += game.currentScore() / float(len(args.word))
+           print(word + " = " + str(game.currentScore()))
+           
+           # reset strategy for next go
+           strategy.newGame()
 
-      print(word + " = " + str(game.currentScore()))
+      print("average: " + str(avg))
+
+      print("Total: %.09f sec." % totalTime.interval) # TODO DBG it
       return 0
    except Exception as err:
       raise err # TODO - for now, I want the stack trace
@@ -67,14 +96,6 @@ def main(argv=None):
       print("for help use --help", file=sys.stderr)
       return 2
 
-
-#-------------------------------------------------------------------------------
-# Sometimes you just want to make the voices go away...
-#-------------------------------------------------------------------------------
-def DBG(printable):
-   """No one likes bugs..."""
-   if DEBUG:
-      print(printable)
 
 #===============================================================================
 #-------------------------------------------------------------------------------
