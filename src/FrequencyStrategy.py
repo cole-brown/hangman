@@ -21,6 +21,7 @@ else:
 
 # CONSTANTS
 DEBUG = False # TODO True for now
+TIMING = True
 
 #===============================================================================
 # CLASS
@@ -32,6 +33,7 @@ class FrequencyStrategy:
 
    # Based on:
    # http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
+   # TODO - remove?
    POPULAR_LETTERS = list("ETAOINSRHDLUCMFYWGPBVKXQJZ")
 
    #-----------------------------------------------------------------------------
@@ -40,8 +42,8 @@ class FrequencyStrategy:
    def __init__(self, filepath):
       """Initialize FrequencyStrategy"""
         
-      # all the possible words
-      self.allWords = set()
+      # all the possible words, divided out based on length
+      self.allWords = collections.defaultdict(set)
 
       # fill in allWords set
       self.parseWordsFile(filepath)
@@ -60,7 +62,7 @@ class FrequencyStrategy:
             self.firstUpdatePossibleWords(game)
          else:
             self.updatePossibleWords(game)
-      print("  Update took %.09f sec." % upTime.interval) # TODO DBG it
+      util.DBG("    Update took %.09f sec." % upTime.interval, TIMING)
 
       # pick a strategy
       # TODO - better decision?
@@ -118,15 +120,8 @@ class FrequencyStrategy:
 
       self.firstRun = False
       
-      # need a (different) set to iterate over whist I remove words
-      # from the possibleWords set
-      tempPossibles = self.possibleWords.copy()
-
-      # First time, just delete all that aren't the right length and
-      # skip all the fancy regexes
-      for word in tempPossibles:
-         if len(word) != game.getSecretWordLength():
-            self.possibleWords.remove(word)
+      # First time. Get a shallow copy of the proper length wordset
+      self.possibleWords = self.allWords[game.getSecretWordLength()].copy()
             
       util.DBG("Possibles: " + str(len(self.possibleWords)) + " (Guesses Left: " + str(game.numWrongGuessesRemaining()) + ")", DEBUG)
 
@@ -184,9 +179,6 @@ class FrequencyStrategy:
 
       self.firstRun = True
 
-      # shallow copy of dictionary set
-      self.possibleWords = self.allWords.copy()
-
    #-----------------------------------------------------------------------------
    # Read words file
    #-----------------------------------------------------------------------------
@@ -200,8 +192,9 @@ class FrequencyStrategy:
 
          # read words file into set
          for line in dictionary:
-            if line.strip() != "": # avoid empty lines
-               self.allWords.add(line.strip().upper()) # get rid of newline char
+            word = line.strip()
+            if word != "": # avoid empty lines
+               self.allWords[len(word)].add(word.upper())
 
 
 #===============================================================================

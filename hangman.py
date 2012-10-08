@@ -16,6 +16,7 @@ from src import util
 
 # CONSTANTS
 DEBUG = False # TODO - true for now
+TIMING = True # TODO - true for now
 
 #-----------------------------------------------------------------------------
 # run the game
@@ -27,7 +28,7 @@ def run(game, strategy, printGameState=True):
       # ask strategy for a guess
       with util.Timer() as sTime:
          guess = strategy.nextGuess(game)
-      print("Strategery took %.09f sec." % sTime.interval) # TODO DBG it
+      util.DBG("Strategery took %.09f sec." % sTime.interval, TIMING)
 
       # apply guess to game
       guess.makeGuess(game)
@@ -66,7 +67,7 @@ def main(argv=None):
          # stuff that can be reused between games
          strategy = FrequencyStrategy(args.filename)
          avg = 0.0
-      print("Strategy init took %.09f sec." % sInit.interval) # TODO DBG it
+      util.DBG("Init took %.09f sec." % sInit.interval, TIMING)
 
       with util.Timer() as totalTime:
          for word in args.word:
@@ -77,7 +78,7 @@ def main(argv=None):
            # run a game!
            with util.Timer() as gTime:
               run(game, strategy, args.verbose)
-           print("Game took %.09f sec." % gTime.interval) # TODO DBG it
+           util.DBG("Game took %.09f sec." % gTime.interval, TIMING)
            
            # average score update
            avg += game.currentScore() / float(len(args.word))
@@ -88,7 +89,7 @@ def main(argv=None):
 
       print("average: " + str(avg))
 
-      print("Total: %.09f sec." % totalTime.interval) # TODO DBG it
+      util.DBG("Total: %.09f sec." % totalTime.interval, TIMING)
       return 0
    except Exception as err:
       raise err # TODO - for now, I want the stack trace

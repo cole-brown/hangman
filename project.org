@@ -491,7 +491,8 @@ So, the first guess takes way too long... 75% of the run is the first guess.
 
 But the timing works, so #014 is done.
 
-*** 015: Faster strategy
+*** done 015: Faster strategy
+    closed: [2012-10-08 Mon 15:31]
 
 Speed up first strategy run.
   - don't do regexes, since they're useless. We haven't guessed anything yet.
@@ -537,8 +538,66 @@ Maybe:
 foo = defaultdict(set)
 foo[secretWordLen] <-- just the possible words of that length
 
-Also Maybe:
-  map() stuff
+Better.
+  Namespace(filename='words.txt', guesses=5, verbose=False, word=['MUS'])
+  Strategy init took 0.162680149 sec.
+
+      Update took 0.000102043 sec.
+  Strategery took 0.005481005 sec.
+
+      Update took 0.001863003 sec.
+  Strategery took 0.005516052 sec.
+
+      Update took 0.001174927 sec.
+  Strategery took 0.003688097 sec.
+
+      Update took 0.000879049 sec.
+  Strategery took 0.002399921 sec.
+
+      Update took 0.000616074 sec.
+  Strategery took 0.001395941 sec.
+
+      Update took 0.000432968 sec.
+  Strategery took 0.000988960 sec.
+
+      Update took 0.000344038 sec.
+  Strategery took 0.000798941 sec.
+  Game took 0.020552158 sec.
+  MUS = 25
+  average: 25.0
+  Total: 0.020627975 sec.
+
+Before:
+  ./hangman.py words.txt COMAKER CUMULATE ERUPTIVE FACTUAL MONADISM MUS NAGGING OSES REMEMBERED SPODUMENES STEREOISOMERS TOXICS TRICHROMATS TRIOSE UNIFORMED
+  ...
+  real	0m6.904s
+  user	0m6.815s
+  sys	0m0.086s
+After:
+  ./hangman.py words.txt COMAKER CUMULATE ERUPTIVE FACTUAL MONADISM MUS NAGGING OSES REMEMBERED SPODUMENES STEREOISOMERS TOXICS TRICHROMATS TRIOSE UNIFORMED
+  ...
+  real	0m3.490s
+  user	0m3.458s
+  sys	0m0.029s
+
+Twice as fast. And update isn't the long pole anymore.
+
+*** 016: command line
+
+Putting words on the command line won't cut it for when we move to large sets.
+  - two files. One dictionary, one of words to be played.
+
+*** 017: faster strategy part 2
+
+Do some strategizing in the init. 
+
+Pre-make sets based on what the initial guesses will be.
+
+E.g.
+ A: set of all words length 5
+ B: set of all words length 5 containing most popular letter in set A
+ C: set of all words length 5 NOT containing most popular letter in set A
+Possibly also the 4 sets for guess 2.
 
 *** 999:
 
