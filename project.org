@@ -493,7 +493,52 @@ But the timing works, so #014 is done.
 
 *** 015: Faster strategy
 
+Speed up first strategy run.
+  - don't do regexes, since they're useless. We haven't guessed anything yet.
+  - just check word lengths
 
+Slightly better.
+
+previous:
+  Strategery took 0.197170019 sec.
+now:
+  Strategery took 0.163403034 sec.
+
+The possible words update takes pretty much all the strategy time.
+  Update     took 0.155512094 sec.
+  Strategery took 0.164095163 sec.
+
+  Update     took 0.004542828 sec.
+  Strategery took 0.010727882 sec.
+
+  Update     took 0.003679991 sec.
+  Strategery took 0.008900166 sec.
+
+  Update     took 0.003553867 sec.
+  Strategery took 0.007694006 sec.
+
+  Update     took 0.003237009 sec.
+  Strategery took 0.006378174 sec.
+
+  Update     took 0.002988100 sec.
+  Strategery took 0.006038904 sec.
+
+  Update     took 0.002842903 sec.
+  Strategery took 0.005592108 sec.
+
+Iterations over the set isn't the problem.
+  ITERATION took 0.014471054 sec.
+But still, don't really want to do that every time... do you?
+
+Maybe:
+  Divide words up into different sets based on length.
+  Possible words tree, basically.
+
+foo = defaultdict(set)
+foo[secretWordLen] <-- just the possible words of that length
+
+Also Maybe:
+  map() stuff
 
 *** 999:
 

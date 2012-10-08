@@ -56,7 +56,10 @@ class FrequencyStrategy:
       """better description""" #TODO
 
       with util.Timer() as upTime:
-         self.updatePossibleWords(game)
+         if self.firstRun:
+            self.firstUpdatePossibleWords(game)
+         else:
+            self.updatePossibleWords(game)
       print("  Update took %.09f sec." % upTime.interval) # TODO DBG it
 
       # pick a strategy
@@ -110,6 +113,27 @@ class FrequencyStrategy:
    #-----------------------------------------------------------------------------
    # find possibilities
    #-----------------------------------------------------------------------------
+   def firstUpdatePossibleWords(self, game):
+      """Narrow down the possible words based on length"""
+
+      self.firstRun = False
+      
+      # need a (different) set to iterate over whist I remove words
+      # from the possibleWords set
+      tempPossibles = self.possibleWords.copy()
+
+      # First time, just delete all that aren't the right length and
+      # skip all the fancy regexes
+      for word in tempPossibles:
+         if len(word) != game.getSecretWordLength():
+            self.possibleWords.remove(word)
+            
+      util.DBG("Possibles: " + str(len(self.possibleWords)) + " (Guesses Left: " + str(game.numWrongGuessesRemaining()) + ")", DEBUG)
+
+
+   #-----------------------------------------------------------------------------
+   # find possibilities
+   #-----------------------------------------------------------------------------
    def updatePossibleWords(self, game):
       """Uses the dictionary and current guess to narrow down the possible words"""
 
@@ -158,6 +182,8 @@ class FrequencyStrategy:
    def newGame(self):
       """Resets class variables to be ready for another game."""
 
+      self.firstRun = True
+
       # shallow copy of dictionary set
       self.possibleWords = self.allWords.copy()
 
@@ -179,7 +205,7 @@ class FrequencyStrategy:
 
 
 #===============================================================================
-# Functions that are Cool enough not to need a class
+# Functions that are cool enough not to need a class
 #===============================================================================
   
 #-------------------------------------------------------------------------------
