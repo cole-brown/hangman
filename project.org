@@ -175,23 +175,6 @@ ignore
   __pycache__/
   python basic class template thing I made
 
-*** started strategy outline
-
-Probably a combination of popular letters & using words.txt file.
-
-http://en.wikipedia.org/wiki/Hangman_%28game%29
-  - letter freq: e-t-a-o-i-n-s-h-r-d-l-u
-
-Once some letters, (and/or after X guesses), switch to:
-  - parse word file for all possibilities
-  - parse possibles for popular letters
-    - reduce multiple-per-word letters to just one? 
-  - try most popular (that hasn't been tried)
-
-When to start guessing words?
-  - when possible word list can all be guessed before game end?
-  - when there's only one possible
-
 * TASKS
 
 *** done 000: Pythonification
@@ -465,7 +448,7 @@ Seems a bit slow.
   user	0m6.815s
   sys	0m0.086s
 
-1000 would take... half an hour-ish.
+1000 would take... 7 or 8 minutes.
 
 Get timing on function level...
   util.Timer is ready for action!
@@ -582,12 +565,83 @@ After:
 
 Twice as fast. And update isn't the long pole anymore.
 
-*** 016: command line
+*** done 016: command line
+    closed: [2012-10-08 Mon 18:59]
 
 Putting words on the command line won't cut it for when we move to large sets.
   - two files. One dictionary, one of words to be played.
 
-*** 017: faster strategy part 2
+*** done 017: faster strategy part 2
+    closed: [2012-10-08 Mon 19:52]
+
+Estimate for 1000 games:
+  Average game time: 0.219625076 sec. (15 game sample)
+  so 1000 would be 219 seconds. 3.6 minutes.
+
+letterStrategy() is the long pole now. It's 2 for loops. One to get the letter
+frequencies and one to chose which of those to use.
+
+$ python3 -m cProfile -s cumulative hangman.py words.txt 100.txt
+...
+        19949500 function calls (19942752 primitive calls) in 25.122 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      8/1    0.000    0.000   25.122   25.122 {built-in method exec}
+        1    0.014    0.014   25.122   25.122 hangman.py:4(<module>)
+        1    0.002    0.002   25.102   25.102 hangman.py:43(main)
+      101    0.008    0.000   24.812    0.246 hangman.py:24(run)
+      726    0.038    0.000   24.787    0.034 FrequencyStrategy.py:57(nextGuess)
+      594    4.213    0.007   20.595    0.035 FrequencyStrategy.py:95(letterStrategy)
+      ...
+
+
+Can we use bulit-in functions instead of for loops?
+
+http://www.python.org/doc/essays/list2str.html
+  "If you feel the need for speed, go for built-in functions - you can't 
+   beat a loop written in C."
+
+So the letter frequency list is taking all the time. Average game time goes down to
+0.04 when I switch back to popular letters.
+
+map() + list comprehension brought the time down some, at the cost of extra memory.
+  Old:
+      594    4.213    0.007   20.595    0.035 FrequencyStrategy.py:95(letterStrategy)
+      Average game time: 0.219625076 sec.
+  New:
+      590    0.054    0.000    9.721    0.016 FrequencyStrategy.py:95(letterStrategy)
+      Average game time: 0.137980131 sec.
+
+Brings estimate for 1000 games to 2.2 minutes.
+Actual for 100 games is 13s.
+
+Initial guesses are taking the vast majority of time, so move to part 3.
+
+*** done 018: random words
+    closed: [2012-10-08 Mon 18:23]
+
+http://stackoverflow.com/questions/9245638/select-random-lines-from-a-file-in-bash
+
+sort -R words.txt | head -n 100 >100.txt
+  Damn. "Invalid option -R". Guess that's Linux only.
+
+http://stackoverflow.com/questions/448005/whats-an-easy-way-to-read-random-line-from-a-file-in-unix-command-line
+
+This works for one line:
+  head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1
+
+But not for >1.
+
+Eh. Just do it in python CLI.
+  - 100.txt
+  - 1000.txt
+
+*** 019: faster strategy part 3
+
+Estimate for 1000 games to 2.2 minutes.
+Actual for 100 games is 13s.
 
 Do some strategizing in the init. 
 
@@ -599,7 +653,11 @@ E.g.
  C: set of all words length 5 NOT containing most popular letter in set A
 Possibly also the 4 sets for guess 2.
 
-*** 999:
+Also pre-make letter frequencies.
+
+*** 999: Parallel
+
+Switch to Go? Can't really parallelize this in Python, but it'd be simple to in Go.
 
 * example
 

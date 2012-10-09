@@ -16,7 +16,7 @@ from src import util
 
 # CONSTANTS
 DEBUG = False # TODO - true for now
-TIMING = True # TODO - true for now
+TIMING = False # TODO - true for now
 
 #-----------------------------------------------------------------------------
 # run the game
@@ -46,49 +46,57 @@ def main(argv=None):
       argv = sys.argv
    try:
       parser = ArgumentParser()
-      parser.add_argument("filename",
+      parser.add_argument("dictionary",
                           help="read dictionary in from file")
-      parser.add_argument("word", nargs="+", 
-                          help="list of words to play hangman on")
+      parser.add_argument("words",
+                          help="read game words in from file")
+#      parser.add_argument("word", nargs="+", 
+#                          help="list of words to play hangman on")
       parser.add_argument("-g", "--guesses", type=int, default=5,
                           help="max number of wrong guesses")
       parser.add_argument("-v", "--verbose", 
                           action="store_true", default=False,
                           #action="count", default=0,
                           help="increase output verbosity")
-#      parser.add_option("-q", "--quiet",
-#                        action="store_false", dest="verbose", default=True,
-#                        help="don't print status messages to stdout")
 
       args = parser.parse_args()
-      print(args) # TODO DEBUG
+      util.DBG(args, DEBUG)
+
+      # read in words to run games on
+      words = []
+      with open(args.words, 'r') as gameWords:
+         # read words file into set
+         words = [word.strip().upper() for word in gameWords if word.strip() != ""]
 
       with util.Timer() as sInit:
          # stuff that can be reused between games
-         strategy = FrequencyStrategy(args.filename)
+         strategy = FrequencyStrategy(args.dictionary)
          avg = 0.0
+         avgTime = 0.0
       util.DBG("Init took %.09f sec." % sInit.interval, TIMING)
 
       with util.Timer() as totalTime:
-         for word in args.word:
-           # make per-game stuff
-           word = word.upper()
-           game = HangmanGame(word, args.guesses)
+         for word in words:
+            # make per-game stuff
+            word = word.upper()
+            game = HangmanGame(word, args.guesses)
            
-           # run a game!
-           with util.Timer() as gTime:
-              run(game, strategy, args.verbose)
-           util.DBG("Game took %.09f sec." % gTime.interval, TIMING)
+            # run a game!
+            with util.Timer() as gTime:
+               run(game, strategy, args.verbose)
+            util.DBG("Game took %.09f sec." % gTime.interval, TIMING)
+            avgTime += gTime.interval / float(len(words))
+
+            # average score update
+            avg += game.currentScore() / float(len(words))
+            print(word + " = " + str(game.currentScore()))
            
-           # average score update
-           avg += game.currentScore() / float(len(args.word))
-           print(word + " = " + str(game.currentScore()))
-           
-           # reset strategy for next go
-           strategy.newGame()
+            # reset strategy for next go
+            strategy.newGame()
 
       print("average: " + str(avg))
 
+      util.DBG("Average game time: %.09f sec." % avgTime, True)
       util.DBG("Total: %.09f sec." % totalTime.interval, TIMING)
       return 0
    except Exception as err:

@@ -21,7 +21,7 @@ else:
 
 # CONSTANTS
 DEBUG = False # TODO True for now
-TIMING = True
+TIMING = False # TODO True for now
 
 #===============================================================================
 # CLASS
@@ -96,12 +96,20 @@ class FrequencyStrategy:
       """guess a letter, based on letter frequency in possible words
       return - the letter to be guessed (string)"""
 
+      # speed test
+#      for letter in self.POPULAR_LETTERS:
+#         if letter not in game.getAllGuessedLetters():
+#            return letter
+
       # bulid a letter frequency list
-      letterCount = collections.Counter()
-      for word in self.possibleWords:
-         # update counter with word's letters (repeated letters removed)
-         letterCount.update(set(word))
-         # TODO test set(word) vs just word (uniq vs non-uniq'd)
+      # This list comprehension version is much faster than the below loop,
+      # at the cost of the memory used by the transient list it creates.
+      letterCount = collections.Counter([letter for sublist in map(set,self.possibleWords) for letter in sublist])
+#      letterCount = collections.Counter()
+#      for word in self.possibleWords:
+#         # update counter with word's letters (repeated letters removed)
+#         letterCount.update(set(word))
+#         # TODO test set(word) vs just word (uniq vs non-uniq'd)
 
       # pick the first letter that hasn't been guessed
       for letter, _ in letterCount.most_common():
