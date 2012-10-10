@@ -737,6 +737,7 @@ Instead guess the letter that would halve the possibilities.
 
 ...if that's possible. I haven't printed out the letter counters in a long time.
 
+*** 999: profile
 *** 999: underscores
 
 Use underscores in FreqStrat to denote "private" funcs/class vars?
