@@ -642,6 +642,9 @@ Eh. Just do it in python CLI.
 
 Estimate for 1000 games to 2.2 minutes.
 Actual for 100 games is 13s.
+Make it faster.
+
+Moved to dev branch in case this goes horribly wrong.
 
 Do some strategizing in the init. 
 
@@ -650,10 +653,93 @@ Pre-make sets based on what the initial guesses will be.
 E.g.
  A: set of all words length 5
  B: set of all words length 5 containing most popular letter in set A
+    - but it's based on position, so.. hm...
  C: set of all words length 5 NOT containing most popular letter in set A
 Possibly also the 4 sets for guess 2.
 
 Also pre-make letter frequencies.
+
+And cache all guess results along the way in every game just in case another 
+game uses it.
+
+- To Do: [4/4]
+  - [X] WordSet class
+    - [X] copy()
+    - [X] updated()
+      - Words has been culled. Redo frequency.
+  - [X] allWords -> WordSet
+    - Would need to make WordSet a class so defaultdict worked right...
+  - [X] possibleWords -> WordSet
+  - [X] remove letter freq gen from strat. Use WordSet's.
+
+Pausing To Do list to note speed gain:
+  $ time python3 hangman.py words.txt 15.txt
+  ...
+  average: 7.267326732673272
+  Average game time: 0.052958725 sec.
+  
+  real	0m6.356s
+  user	0m6.295s
+  sys	0m0.058s
+
+So 1000 will now take ~1 min. Yay!
+
+Back to work...
+- To Do: [3/3]
+  - [X] cache WordSet for each guess
+    - 1.9 sec for 15 words (5 cache hits, but those aren't used yet)
+  - [X] look in cache for match
+    - 1.85 sec for 15 words
+    - 4.3 sec for 100
+      - Average game time: 0.032850029 sec.
+      - 1000 games in ~32 sec
+  - [X] combine cache & allWords?
+    - I think this removes need for firstUpdatePossibleWords()
+    - Hm... this makes each game take long...
+      - Wait. Nevermind. I was silly. Time is the same.
+
+Just ran 1000 for real for the first time.
+  average: 7.987012987012973
+  Average game time: 0.014038171 sec.
+  
+  real	0m15.202s
+  user	0m15.119s
+  sys	0m0.077s
+
+Very nice...
+
+- To Do 3: [1/2]
+  - [X] pre-guess first level (fail for most popular letter)
+    - [X] Only do it for non-small lists. 
+      - Don't need to bother if the only possible word is "ETHYLENEDIAMINETETRAACETATES"
+    - [X] make letterStrategy() not need game
+      - it only uses game for getAllGuessedLetters()
+        - make it just take a set instead
+    - [X] freebie
+  - [ ] Push to master branch
+
+Hm... impressive gains for 15 words, but 1000 is less impressive. Guess that makes sense.
+
+1000 words w/ pre-seeded-first-guess-miss cache:
+  average: 7.9560439560439455
+  Average game time: 0.013550419 sec.
+  
+  real	0m14.987s
+  user	0m14.904s
+  sys	0m0.078s
+
+*** 999: better strategy
+
+Don't guess most popular letter...
+
+Instead guess the letter that would halve the possibilities.
+  i.e. binary search hangman
+
+...if that's possible. I haven't printed out the letter counters in a long time.
+
+*** 999: underscores
+
+Use underscores in FreqStrat to denote "private" funcs/class vars?
 
 *** 999: Parallel
 
