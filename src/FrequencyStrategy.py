@@ -59,6 +59,8 @@ class FrequencyStrategy:
 
       self.newGame()
 
+      util.DBG("INIT DONE!!!!!!", True)
+
 
    #-----------------------------------------------------------------------------
    # pick a strategy
@@ -85,7 +87,8 @@ class FrequencyStrategy:
          # Any letter.
          # Not that letter.
          return GuessLetter(self.letterStrategy(self.possible,
-                                                game.getAllGuessedLetters()))
+                                                game.getAllGuessedLetters(),
+                                                game.numWrongGuessesRemaining()))
 
 
    #-----------------------------------------------------------------------------
@@ -95,7 +98,7 @@ class FrequencyStrategy:
       """guess a word, based on possible words
       return - the word to be guessed (string)"""
 
-      for word in self.possible.words:
+      for word in sorted(self.possible.words):
          if word not in game.getIncorrectlyGuessedWords():
             util.DBG("GUESS: " + word, DEBUG)
             return word
@@ -104,7 +107,7 @@ class FrequencyStrategy:
    #-----------------------------------------------------------------------------
    # pick-a-letter strategy
    #-----------------------------------------------------------------------------
-   def letterStrategy(self, wordSet, letterSet):
+   def letterStrategy(self, wordSet, letterSet, guessesLeft):
       """guess a letter, based on letter frequency in possible words
       return - the letter to be guessed (string)"""
 
@@ -113,10 +116,18 @@ class FrequencyStrategy:
 #         if letter not in game.getAllGuessedLetters():
 #            return letter
 
-      # pick the first letter that hasn't been guessed
-      for letter, _ in wordSet.letterFreq.most_common():
+      # Pick the first letter that hasn't been guessed.
+      # Sort letterFreq for stable word scores by ensuring that 11 a's always
+      # get guessed before 11 b's.
+#      for letter, _ in wordSet.letterFreq.most_common(): # normal
+#      for letter, _ in sorted(wordSet.letterFreq.most_common(),
+#                              key=lambda lc: (-lc[1], lc[0])): # a-z
+      for letter, _ in sorted(wordSet.letterFreq.most_common(),
+                              key=lambda lc: (lc[1], lc[0]), reverse=True): # z-a
          if letter not in letterSet:
             util.DBG("GUESS: " + letter, DEBUG)
+            util.DBG(" num: " + str(len(wordSet)), DEBUG)
+            util.DBG(" letters: " + str(wordSet.letterFreq.most_common()), DEBUG)
             return letter
 
       # TODO: raise error if entire alphabet has been guessed already?
@@ -263,7 +274,7 @@ class FrequencyStrategy:
          # don't bother for the sets that are tiny
          if len(self.wordCache[k]) > self.SEED_MIN:
             # determine first guess letter
-            letter = self.letterStrategy(self.wordCache[k], emptySet)
+            letter = self.letterStrategy(self.wordCache[k], emptySet, 1000)
 
             # weed down to just failures
             noLetter = self.wordCache[k].copy()
@@ -275,7 +286,7 @@ class FrequencyStrategy:
             # save to cache with new key
             key = HangmanGame.MYSTERY_LETTER * len(word) + "!" + letter
             self.wordCache[key] = noLetter
-            util.DBG("pre-cached: " + key)
+            util.DBG("pre-cached: " + key, DEBUG)
 
       # TODO - pre-seed two misses as well?
 

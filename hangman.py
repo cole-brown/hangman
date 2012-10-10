@@ -55,9 +55,9 @@ def main(argv=None):
       parser.add_argument("-g", "--guesses", type=int, default=5,
                           help="max number of wrong guesses")
       parser.add_argument("-v", "--verbose", 
-                          action="store_true", default=False,
-                          #action="count", default=0,
-                          help="increase output verbosity")
+                          #action="store_true", default=False,
+                          action="count", default=0,
+                          help="increase output verbosity (-vv for extra verbose)")
 
       args = parser.parse_args()
       util.DBG(args, DEBUG)
@@ -83,13 +83,15 @@ def main(argv=None):
            
             # run a game!
             with util.Timer() as gTime:
-               run(game, strategy, args.verbose)
+               run(game, strategy, args.verbose > 1)
             util.DBG("Game took %.09f sec." % gTime.interval, TIMING)
             avgTime += gTime.interval / float(len(words))
 
             # average score update
             avg += game.currentScore() / float(len(words))
-            print(word + " = " + str(game.currentScore()))
+
+            if args.verbose:
+               print(word + " = " + str(game.currentScore()))
            
             # reset strategy for next go
             strategy.newGame()

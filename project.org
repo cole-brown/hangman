@@ -638,7 +638,8 @@ Eh. Just do it in python CLI.
   - 100.txt
   - 1000.txt
 
-*** 019: faster strategy part 3
+*** done 019: faster strategy part 3
+    closed: [2012-10-09 Tue 21:10]
 
 Estimate for 1000 games to 2.2 minutes.
 Actual for 100 games is 13s.
@@ -708,7 +709,7 @@ Just ran 1000 for real for the first time.
 
 Very nice...
 
-- To Do 3: [1/2]
+- To Do 3: [2/2]
   - [X] pre-guess first level (fail for most popular letter)
     - [X] Only do it for non-small lists. 
       - Don't need to bother if the only possible word is "ETHYLENEDIAMINETETRAACETATES"
@@ -716,7 +717,7 @@ Very nice...
       - it only uses game for getAllGuessedLetters()
         - make it just take a set instead
     - [X] freebie
-  - [ ] Push to master branch
+  - [X] Push to master branch
 
 Hm... impressive gains for 15 words, but 1000 is less impressive. Guess that makes sense.
 
@@ -728,7 +729,8 @@ Hm... impressive gains for 15 words, but 1000 is less impressive. Guess that mak
   user	0m14.904s
   sys	0m0.078s
 
-*** 999: better strategy
+*** done 020: better strategy
+    closed: [2012-10-09 Tue 21:44]
 
 Don't guess most popular letter...
 
@@ -736,6 +738,250 @@ Instead guess the letter that would halve the possibilities.
   i.e. binary search hangman
 
 ...if that's possible. I haven't printed out the letter counters in a long time.
+
+Current, "choose most frequent letter" strategy:
+  average: 8.042957042957035
+  Average game time: 0.014179471 sec.
+  real	0m15.650s
+
+And, no so great.
+  average: 14.666666666666668
+
+Maybe first 2 use that, the rest use most common?
+  average: 8.441558441558433
+  Average game time: 0.013310668 sec.
+  real	0m14.986s
+
+So apparently gunning for 50% wrong chance instead of best chance of being right
+increases your score. Who've thunk.
+
+Not much increase in speed, either, so... remove it.
+
+      orderedLetters = wordSet.letterFreq.most_common()
+      if guessesLeft > 2:
+         # order letters based on which closest to being in half the words
+         target = len(wordSet) // 2
+         orderedLetters.sort(key = lambda lc: abs(lc[1]-target))
+
+      # pick the first letter that hasn't been guessed
+      for letter, _ in orderedLetters:
+
+*** done 021: better strategy 2
+    closed: [2012-10-09 Tue 22:07]
+
+is guessing words worth it?
+
+Try only guessing words when there's only 1 word to guess.
+
+Current:
+  average: 7.913086913086897
+  Average game time: 0.014154551 sec.
+  real	0m15.641s
+
+Almost Only Letters strat:
+  average: 8.219780219780185
+  Average game time: 0.014710151 sec.
+  real	0m16.322s
+
+Nope. Guessing words is worth it, apparently. Leave it.
+
+*** done 022: verbosity
+    closed: [2012-10-09 Tue 22:16]
+
+Add it...
+ -v and -vv in use
+
+*** done 023: inconsistant score?
+    closed: [2012-10-09 Tue 23:44]
+
+Same words, different scores sometimes.
+5 runs of 15 word list:
+  COMAKER       = 12 10  12  25 10  
+  CUMULATE      = 9  9   9   9  9   
+  ERUPTIVE      = 8  8   8   8  8   
+  FACTUAL       = 10 10  10  10 10  
+  MONADISM      = 6  6   6   6  6   
+  MUS           = 25 25  25  25 25  
+  NAGGING       = 4  4   4   4  4   
+  OSES          = 4  4   4   4  4   
+  REMEMBERED    = 4  4   4   4  4   
+  SPODUMENES    = 4  5   5   5  5   
+  STEREOISOMERS = 3  3   3   3  3   
+  TOXICS        = 10 11  11  11 11  
+  TRICHROMATS   = 5  5   5   5  5   
+  TRIOSE        = 11 7   7   8  7   
+  UNIFORMED     = 9  10  10  9  10  
+
+Suspect it's due to unordered nature of sets...
+  - sorted the words before wordStrategy picked one, but that's not (all of) it.
+
+It guesses different letters sometimes too.
+  GUESS: E R I A T S M K O
+  COMAKER = 9
+  
+  GUESS: E R I A T S L M K N O C
+  COMAKER = 12
+
+Ah. It's the collections.Counter I use for letterFreq... That's unordered.
+  - see 'debug output'.
+
+Easy way to sort? 
+  sorted(wordSet.letterFreq.most_common, key = lambda lc: abs(lc[1]-target))
+
+Works.
+How much speed does it cost?
+How much do I care about stable game scores?
+  Unsorted:
+    average: 7.913086913086897
+    Average game time: 0.014154551 sec.
+    real	0m15.641s
+  Sorted a-z:
+    average: 8.013986013985999
+    Average game time: 0.014091464 sec.
+    real	0m15.522s
+  Sorted z-a:
+    average: 7.8011988011987885
+    Average game time: 0.013920768 sec.
+    real	0m15.491s
+
+So for /my/ 1000 words, z-a is better...
+100?
+  unsorted:
+    average: 7.584158415841589
+    average: 7.910891089108916
+  z-a:
+    average: 7.198019801980203
+  a-z:
+    average: 7.584158415841589
+
+All 173529 words?
+  unsorted:
+    average: 7.773973076397922
+    Average game time: 0.003772665 sec.
+    real	11m0.143s
+  a-z:
+    average: 7.82038633535348
+    Average game time: 0.003799100 sec.
+    real	11m5.142s
+  z-a:
+    average: 7.740837213597154
+    Average game time: 0.003757779 sec.
+    real	10m57.319s
+
+So I guess it's Z-A...
+
+***** debug output
+GUESS: E
+ num: 23208
+ letters: [('E', 15273), ('S', 12338), ('I', 11028), ('A', 10830), ('R', 10516), ('N', 8545), ('T', 8034), ('O', 7993), ('L', 7946), ('D', 5995), ('U', 5722), ('C', 5341), ('G', 4590), ('P', 4308), ('M', 4181), ('H', 3701), ('B', 3292), ('Y', 2564), ('F', 2115), ('K', 2100), ('W', 1827), ('V', 1394), ('Z', 611), ('X', 504), ('J', 412), ('Q', 301)]
+GUESS: R
+ num: 6712
+ letters: [('E', 6712), ('R', 3483), ('S', 3466), ('D', 2837), ('I', 2700), ('A', 2424), ('L', 2234), ('T', 2010), ('N', 1785), ('O', 1763), ('U', 1597), ('C', 1405), ('P', 1146), ('H', 1100), ('M', 1023), ('G', 924), ('B', 892), ('K', 596), ('F', 581), ('W', 561), ('V', 403), ('Y', 261), ('Z', 180), ('X', 144), ('Q', 114), ('J', 113)]
+GUESS: I
+ num: 1821
+ letters: [('E', 1821), ('R', 1821), ('I', 874), ('A', 620), ('L', 572), ('T', 551), ('S', 544), ('O', 441), ('U', 420), ('N', 398), ('C', 358), ('P', 334), ('D', 299), ('H', 296), ('M', 263), ('G', 244), ('B', 235), ('K', 192), ('F', 185), ('W', 175), ('V', 99), ('Y', 48), ('Z', 44), ('J', 27), ('Q', 25), ('X', 13)]
+GUESS: A
+ num: 947
+ letters: [('E', 947), ('R', 947), ('A', 415), ('L', 350), ('S', 323), ('T', 306), ('O', 294), ('U', 273), ('C', 238), ('N', 203), ('H', 178), ('P', 177), ('D', 154), ('B', 151), ('M', 127), ('G', 120), ('W', 92), ('F', 85), ('K', 80), ('V', 48), ('Y', 37), ('Z', 17), ('Q', 14), ('J', 11), ('X', 7)]
+GUESS: S
+ num: 99
+ letters: [('A', 99), ('E', 99), ('R', 99), ('S', 26), ('T', 26), ('L', 25), ('C', 20), ('G', 20), ('D', 19), ('O', 17), ('M', 17), ('P', 16), ('N', 15), ('B', 12), ('K', 12), ('Y', 12), ('H', 9), ('V', 8), ('F', 7), ('U', 6), ('W', 5), ('Q', 1), ('X', 1)]
+GUESS: L
+ num: 73
+ letters: [('A', 73), ('E', 73), ('R', 73), ('L', 21), ('T', 20), ('G', 17), ('D', 17), ('C', 15), ('M', 15), ('O', 14), ('N', 14), ('B', 11), ('K', 10), ('P', 10), ('Y', 8), ('H', 7), ('V', 7), ('F', 6), ('U', 5), ('W', 3), ('X', 1)]
+GUESS: D
+ num: 52
+ letters: [('A', 52), ('E', 52), ('R', 52), ('D', 15), ('G', 13), ('M', 13), ('T', 13), ('N', 12), ('C', 11), ('K', 9), ('O', 9), ('B', 8), ('H', 7), ('P', 6), ('F', 5), ('V', 5), ('U', 5), ('Y', 5), ('W', 3)]
+GUESS: G
+ num: 37
+ letters: [('A', 37), ('E', 37), ('R', 37), ('G', 11), ('N', 11), ('M', 10), ('T', 9), ('C', 8), ('K', 8), ('H', 7), ('O', 7), ('B', 5), ('P', 4), ('V', 4), ('U', 4), ('Y', 4), ('F', 3), ('W', 1)]
+GUESS: C
+ num: 26
+ letters: [('A', 26), ('E', 26), ('R', 26), ('C', 8), ('K', 8), ('M', 8), ('H', 6), ('T', 6), ('B', 5), ('N', 5), ('P', 4), ('O', 3), ('U', 3), ('Y', 3), ('F', 2), ('V', 2), ('W', 1)]
+GUESS: K
+ num: 5
+ letters: [('C', 5), ('R', 5), ('A', 5), ('E', 5), ('K', 2), ('H', 2), ('O', 2), ('M', 2), ('P', 1), ('T', 1)]
+GUESS: O
+ num: 2
+ letters: [('C', 2), ('R', 2), ('A', 2), ('E', 2), ('K', 2), ('O', 2), ('M', 1)]
+GUESS: M
+ num: 1
+ letters: [('C', 1), ('R', 1), ('A', 1), ('E', 1), ('K', 1), ('O', 1), ('M', 1)]
+COMAKER = 12
+
+GUESS: E
+ num: 23208
+ letters: [('E', 15273), ('S', 12338), ('I', 11028), ('A', 10830), ('R', 10516), ('N', 8545), ('T', 8034), ('O', 7993), ('L', 7946), ('D', 5995), ('U', 5722), ('C', 5341), ('G', 4590), ('P', 4308), ('M', 4181), ('H', 3701), ('B', 3292), ('Y', 2564), ('F', 2115), ('K', 2100), ('W', 1827), ('V', 1394), ('Z', 611), ('X', 504), ('J', 412), ('Q', 301)]
+GUESS: R
+ num: 6712
+ letters: [('E', 6712), ('R', 3483), ('S', 3466), ('D', 2837), ('I', 2700), ('A', 2424), ('L', 2234), ('T', 2010), ('N', 1785), ('O', 1763), ('U', 1597), ('C', 1405), ('P', 1146), ('H', 1100), ('M', 1023), ('G', 924), ('B', 892), ('K', 596), ('F', 581), ('W', 561), ('V', 403), ('Y', 261), ('Z', 180), ('X', 144), ('Q', 114), ('J', 113)]
+GUESS: I
+ num: 1821
+ letters: [('R', 1821), ('E', 1821), ('I', 874), ('A', 620), ('L', 572), ('T', 551), ('S', 544), ('O', 441), ('U', 420), ('N', 398), ('C', 358), ('P', 334), ('D', 299), ('H', 296), ('M', 263), ('G', 244), ('B', 235), ('K', 192), ('F', 185), ('W', 175), ('V', 99), ('Y', 48), ('Z', 44), ('J', 27), ('Q', 25), ('X', 13)]
+GUESS: A
+ num: 947
+ letters: [('R', 947), ('E', 947), ('A', 415), ('L', 350), ('S', 323), ('T', 306), ('O', 294), ('U', 273), ('C', 238), ('N', 203), ('H', 178), ('P', 177), ('D', 154), ('B', 151), ('M', 127), ('G', 120), ('W', 92), ('F', 85), ('K', 80), ('V', 48), ('Y', 37), ('Z', 17), ('Q', 14), ('J', 11), ('X', 7)]
+GUESS: S
+ num: 99
+ letters: [('R', 99), ('A', 99), ('E', 99), ('S', 26), ('T', 26), ('L', 25), ('C', 20), ('G', 20), ('D', 19), ('M', 17), ('O', 17), ('P', 16), ('N', 15), ('Y', 12), ('B', 12), ('K', 12), ('H', 9), ('V', 8), ('F', 7), ('U', 6), ('W', 5), ('Q', 1), ('X', 1)]
+GUESS: L
+ num: 73
+ letters: [('R', 73), ('A', 73), ('E', 73), ('L', 21), ('T', 20), ('D', 17), ('G', 17), ('C', 15), ('M', 15), ('N', 14), ('O', 14), ('B', 11), ('P', 10), ('K', 10), ('Y', 8), ('V', 7), ('H', 7), ('F', 6), ('U', 5), ('W', 3), ('X', 1)]
+GUESS: D
+ num: 52
+ letters: [('R', 52), ('A', 52), ('E', 52), ('D', 15), ('T', 13), ('G', 13), ('M', 13), ('N', 12), ('C', 11), ('K', 9), ('O', 9), ('B', 8), ('H', 7), ('P', 6), ('U', 5), ('V', 5), ('Y', 5), ('F', 5), ('W', 3)]
+GUESS: G
+ num: 37
+ letters: [('R', 37), ('A', 37), ('E', 37), ('G', 11), ('N', 11), ('M', 10), ('T', 9), ('C', 8), ('K', 8), ('H', 7), ('O', 7), ('B', 5), ('P', 4), ('U', 4), ('V', 4), ('Y', 4), ('F', 3), ('W', 1)]
+GUESS: C
+ num: 26
+ letters: [('R', 26), ('A', 26), ('E', 26), ('C', 8), ('K', 8), ('M', 8), ('T', 6), ('H', 6), ('B', 5), ('N', 5), ('P', 4), ('U', 3), ('Y', 3), ('O', 3), ('V', 2), ('F', 2), ('W', 1)]
+GUESS: H
+ num: 5
+ letters: [('A', 5), ('R', 5), ('C', 5), ('E', 5), ('H', 2), ('K', 2), ('M', 2), ('O', 2), ('P', 1), ('T', 1)]
+COMAKER = 25
+
+GUESS: E
+ num: 23208
+ letters: [('E', 15273), ('S', 12338), ('I', 11028), ('A', 10830), ('R', 10516), ('N', 8545), ('T', 8034), ('O', 7993), ('L', 7946), ('D', 5995), ('U', 5722), ('C', 5341), ('G', 4590), ('P', 4308), ('M', 4181), ('H', 3701), ('B', 3292), ('Y', 2564), ('F', 2115), ('K', 2100), ('W', 1827), ('V', 1394), ('Z', 611), ('X', 504), ('J', 412), ('Q', 301)]
+-----E-; score=1; status=KEEP_GUESSING
+GUESS: R
+ num: 6712
+ letters: [('E', 6712), ('R', 3483), ('S', 3466), ('D', 2837), ('I', 2700), ('A', 2424), ('L', 2234), ('T', 2010), ('N', 1785), ('O', 1763), ('U', 1597), ('C', 1405), ('P', 1146), ('H', 1100), ('M', 1023), ('G', 924), ('B', 892), ('K', 596), ('F', 581), ('W', 561), ('V', 403), ('Y', 261), ('Z', 180), ('X', 144), ('Q', 114), ('J', 113)]
+-----ER; score=2; status=KEEP_GUESSING
+GUESS: I
+ num: 1821
+ letters: [('R', 1821), ('E', 1821), ('I', 874), ('A', 620), ('L', 572), ('T', 551), ('S', 544), ('O', 441), ('U', 420), ('N', 398), ('C', 358), ('P', 334), ('D', 299), ('H', 296), ('M', 263), ('G', 244), ('B', 235), ('K', 192), ('F', 185), ('W', 175), ('V', 99), ('Y', 48), ('Z', 44), ('J', 27), ('Q', 25), ('X', 13)]
+-----ER; score=3; status=KEEP_GUESSING
+GUESS: A
+ num: 947
+ letters: [('R', 947), ('E', 947), ('A', 415), ('L', 350), ('S', 323), ('T', 306), ('O', 294), ('U', 273), ('C', 238), ('N', 203), ('H', 178), ('P', 177), ('D', 154), ('B', 151), ('M', 127), ('G', 120), ('W', 92), ('F', 85), ('K', 80), ('V', 48), ('Y', 37), ('Z', 17), ('Q', 14), ('J', 11), ('X', 7)]
+---A-ER; score=4; status=KEEP_GUESSING
+GUESS: T
+ num: 99
+ letters: [('R', 99), ('E', 99), ('A', 99), ('T', 26), ('S', 26), ('L', 25), ('G', 20), ('C', 20), ('D', 19), ('M', 17), ('O', 17), ('P', 16), ('N', 15), ('Y', 12), ('K', 12), ('B', 12), ('H', 9), ('V', 8), ('F', 7), ('U', 6), ('W', 5), ('X', 1), ('Q', 1)]
+---A-ER; score=5; status=KEEP_GUESSING
+GUESS: S
+ num: 73
+ letters: [('R', 73), ('E', 73), ('A', 73), ('S', 20), ('C', 18), ('L', 17), ('G', 16), ('M', 15), ('P', 14), ('D', 14), ('O', 13), ('N', 13), ('Y', 11), ('K', 11), ('V', 8), ('B', 8), ('H', 7), ('U', 5), ('F', 5), ('W', 3), ('X', 1), ('Q', 1)]
+---A-ER; score=6; status=KEEP_GUESSING
+GUESS: M
+ num: 53
+ letters: [('R', 53), ('E', 53), ('A', 53), ('M', 14), ('L', 14), ('D', 13), ('G', 13), ('C', 13), ('N', 12), ('O', 10), ('K', 9), ('Y', 8), ('P', 8), ('V', 7), ('B', 7), ('H', 5), ('F', 5), ('U', 4), ('W', 2), ('X', 1)]
+--MA-ER; score=7; status=KEEP_GUESSING
+GUESS: K
+ num: 6
+ letters: [('R', 6), ('M', 6), ('E', 6), ('A', 6), ('K', 3), ('U', 2), ('O', 2), ('N', 2), ('H', 2), ('G', 2), ('D', 1), ('C', 1)]
+--MAKER; score=8; status=KEEP_GUESSING
+GUESS: U
+ num: 3
+ letters: [('M', 3), ('K', 3), ('E', 3), ('A', 3), ('R', 3), ('U', 1), ('O', 1), ('N', 1), ('C', 1)]
+--MAKER; score=9; status=KEEP_GUESSING
+GUESS: O
+ num: 2
+ letters: [('M', 2), ('K', 2), ('E', 2), ('A', 2), ('R', 2), ('O', 1), ('C', 1)]
+-OMAKER; score=10; status=KEEP_GUESSING
+COMAKER; score=10; status=GAME_WON
 
 *** 999: profile
 *** 999: underscores
