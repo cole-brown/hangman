@@ -12,8 +12,8 @@ from src.FrequencyStrategy import FrequencyStrategy
 from src import util
 
 # CONSTANTS
-DEBUG = False # TODO - true for now
-TIMING = False # TODO - true for now
+DEBUG  = False # true for Debug print outs
+TIMING = False # true for Timing print outs not included in args.time
 
 #-----------------------------------------------------------------------------
 # run the game
@@ -49,10 +49,10 @@ def main(argv=None):
       parser = ArgumentParser()
       parser.add_argument("dictionary",
                           help="read dictionary in from file")
-      parser.add_argument("words",
-                          help="read game words in from file")
-#      parser.add_argument("words", nargs="+", 
-#                          help="list of words to play hangman on")
+#      parser.add_argument("words",
+#                          help="read game words in from file")
+      parser.add_argument("words", nargs="+", 
+                          help="list of words to play hangman on")
       parser.add_argument("-g", "--guesses", type=int, default=5,
                           help="max number of wrong guesses")
       parser.add_argument("-v", "--verbose", 
@@ -107,12 +107,14 @@ def main(argv=None):
 
       print("average score: " + str(avg))
 
-      util.DBG("init took:         %09f sec." % sInit.interval, args.time)
-      util.DBG("average game time: %09f sec." % avgTime, args.time)
-      util.DBG("total time:        %09f sec." % totalTime.interval, args.time)
+      util.DBG("init time:         %09f sec" % sInit.interval, args.time)
+      util.DBG("average game time: %09f sec" % avgTime, args.time)
+      util.DBG("total game time:   %09f sec" % totalTime.interval, args.time)
+      util.DBG("total time:        %09f sec" % (sInit.interval + totalTime.interval),
+               args.time)
       return 0
    except Exception as err:
-      raise err # TODO - for now, I want the stack trace
+      # raise err # uncomment to get stack trace
       print(err, file=sys.stderr)
       print("for help use --help", file=sys.stderr)
       return 2

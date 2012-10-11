@@ -142,15 +142,9 @@ Your solution will be graded on the following criteria
 
 * CMDs
 
-none yet...
+python3 hangman.py -t data/words.txt `cat data/2.txt | tr "\n" " "`
 
-* users.txt
-
-nada
-
-* Costs
-
-nada
+./hangman.py -t data/words.txt `cat data/2.txt | tr "\n" " "`
 
 * Notes
 
@@ -159,16 +153,13 @@ nada
 * TODOs
 
 *** done update python
-    closed: [2012-10-03 Wed 15:17]
 
 get 3.3.0
 
 http://www.python.org/download/releases/3.3.0/
 
 *** done python indent -> 3 spaces
-    closed: [2012-10-04 Thu 15:05]
 *** done git repo
-    closed: [2012-10-04 Thu 16:49]
 
 ignore 
   factual/
@@ -178,12 +169,10 @@ ignore
 * TASKS
 
 *** done 000: Pythonification
-    closed: [2012-10-03 Wed 21:41]
 
 Convert their java to Python as first step.
 
 *** done 001: Test HangmanGame
-    closed: [2012-10-04 Thu 14:56]
 
 Sanity test java->py.
 
@@ -199,13 +188,11 @@ FACTUAL; score=5; status=GAME_WON
 Output == good
 
 *** done 002: parse word file
-    closed: [2012-10-04 Thu 16:25]
 
 File reading first. Then dump into set?
   - yes.
 
 *** done 003: Get basic letter guessing in place
-    closed: [2012-10-04 Thu 18:33]
 
 Pick next letter based on what's already been guessed.
 
@@ -224,7 +211,6 @@ And... this is working.
   FACTUAL = 25
 
 *** done 004: game running script
-    closed: [2012-10-04 Thu 17:42]
 
 Make it so!
 
@@ -232,12 +218,10 @@ run function like so:
   public int run(HangmanGame game, GuessingStrategy strategy)
 
 *** done 005: move DBG() to separate file
-    closed: [2012-10-05 Fri 15:16]
 
 Make it DBG(printable, prefix="", printFlag=True)
 
 *** done 006: word finding
-    closed: [2012-10-04 Thu 21:03]
 
 Use guessedSoFar to figure out word candidates.
 
@@ -246,7 +230,6 @@ Probably should regex it.
 Pretty stupid regex builder, but it works. We'll see if we need speed later.
 
 *** done 007: smarter letter guesser
-    closed: [2012-10-04 Thu 21:06]
 
 build letter frequency info from possible word list
 
@@ -295,7 +278,6 @@ Hey. I didn't lose this time!
   FACTUAL = 9
 
 *** done 008: smarter word finding
-    closed: [2012-10-04 Thu 21:34]
 
 Reject words containing failed guesses
 
@@ -310,7 +292,6 @@ Rejecting based on incorrect letters
     - been TODO'd in code
 
 *** done 009: BUG: wrong letter regex
-    closed: [2012-10-05 Fri 15:39]
 
 regex to remove words containing incorrect letter choice bugged
   - but working partially... it removes some.
@@ -366,12 +347,10 @@ regex to remove words containing incorrect letter choice bugged
 Ah, match(). Don't use match. Use search().
 
 *** done 010: word guessing
-    closed: [2012-10-05 Fri 16:51]
 
 Currently only guesses at words if it's possible to win that way.
 
 *** done 011: command line optinos
-    closed: [2012-10-05 Fri 18:00]
 
  - location of dictionary
  - list of words
@@ -390,7 +369,6 @@ optional arguments:
                         max number of wrong guesses
 
 *** done 012: Modify to work for multiple games
-    closed: [2012-10-05 Fri 18:47]
 
 Reuse strategy.
 
@@ -398,7 +376,6 @@ Also:
 - average score
 
 *** done 013: test on words
-    closed: [2012-10-05 Fri 18:55]
 
 Their words:
    COMAKER = 25 (was not able to guess the word before making more than 5 mistakes)
@@ -439,7 +416,6 @@ $ ./hangman.py words.txt COMAKER CUMULATE ERUPTIVE FACTUAL MONADISM MUS NAGGING 
 Yay. 0.77777777777 better!
 
 *** done 014: timing
-    closed: [2012-10-06 Sat 20:47]
 
 Seems a bit slow. 
 
@@ -475,7 +451,6 @@ So, the first guess takes way too long... 75% of the run is the first guess.
 But the timing works, so #014 is done.
 
 *** done 015: Faster strategy
-    closed: [2012-10-08 Mon 15:31]
 
 Speed up first strategy run.
   - don't do regexes, since they're useless. We haven't guessed anything yet.
@@ -566,13 +541,11 @@ After:
 Twice as fast. And update isn't the long pole anymore.
 
 *** done 016: command line
-    closed: [2012-10-08 Mon 18:59]
 
 Putting words on the command line won't cut it for when we move to large sets.
   - two files. One dictionary, one of words to be played.
 
 *** done 017: faster strategy part 2
-    closed: [2012-10-08 Mon 19:52]
 
 Estimate for 1000 games:
   Average game time: 0.219625076 sec. (15 game sample)
@@ -620,7 +593,6 @@ Actual for 100 games is 13s.
 Initial guesses are taking the vast majority of time, so move to part 3.
 
 *** done 018: random words
-    closed: [2012-10-08 Mon 18:23]
 
 http://stackoverflow.com/questions/9245638/select-random-lines-from-a-file-in-bash
 
@@ -639,7 +611,6 @@ Eh. Just do it in python CLI.
   - 1000.txt
 
 *** done 019: faster strategy part 3
-    closed: [2012-10-09 Tue 21:10]
 
 Estimate for 1000 games to 2.2 minutes.
 Actual for 100 games is 13s.
@@ -730,7 +701,6 @@ Hm... impressive gains for 15 words, but 1000 is less impressive. Guess that mak
   sys	0m0.078s
 
 *** done 020: better strategy
-    closed: [2012-10-09 Tue 21:44]
 
 Don't guess most popular letter...
 
@@ -767,7 +737,6 @@ Not much increase in speed, either, so... remove it.
       for letter, _ in orderedLetters:
 
 *** done 021: better strategy 2
-    closed: [2012-10-09 Tue 22:07]
 
 is guessing words worth it?
 
@@ -786,13 +755,11 @@ Almost Only Letters strat:
 Nope. Guessing words is worth it, apparently. Leave it.
 
 *** done 022: verbosity
-    closed: [2012-10-09 Tue 22:16]
 
 Add it...
  -v and -vv in use
 
 *** done 023: inconsistant score?
-    closed: [2012-10-09 Tue 23:44]
 
 Same words, different scores sometimes.
 5 runs of 15 word list:
@@ -984,7 +951,6 @@ GUESS: O
 COMAKER; score=10; status=GAME_WON
 
 *** done 024: faster regex
-    closed: [2012-10-10 Wed 01:19]
 
 Use one instead of 2.
 
@@ -1013,7 +979,6 @@ After after:
     real	0m14.435s
 
 *** done 025: clean-up
-    closed: [2012-10-10 Wed 17:31]
 
 Make pretty!
 
@@ -1031,12 +996,10 @@ Make pretty!
     - I check game's status instead.
 
 *** done 026: try different SEED_MINs
-    closed: [2012-10-10 Wed 17:31]
 
 Doesn't seem to affect time much, changing that.
 
 *** done 027: README
-    closed: [2012-10-10 Wed 22:53]
 
 Install Python 3.3.0.
 
@@ -1046,21 +1009,39 @@ Explain how to switch to use file instead of list.
 
 Explain strategy & optimization.
 
-*** 028: clean-up finale [1/6]
+*** done 028: clean-up finale [7/7]
 
  - [X] Spell check README.
 
- - [ ] Handle unable-to-guess-word better.
+ - [X] Handle unable-to-guess-word better.
+   - actually I don't need to. 
+     "Every word you encounter will be a word from the words.txt file."
+   - but here's the code if I want it later:
+      # If we can't guess the word...
+      if len(self.possible) == 0 or self.possible.words == game.getIncorrectlyGuessedWords():
+         # just guess common letters
+         for letter in list("ETAOINSRHDLUCMFYWGPBVKXQJZ"):
+            if letter not in game.getAllGuessedLetters():
+               return GuessLetter(letter)
+      el<current if goes here>
 
- - [ ] Clean it up.
-
- - [ ] Remove DBG() and timing?
+ - [X] Remove DBG() and timing?
    - that aren't used
+     - [X] hangman
+     - [X] FrequencyStrategy
 
- - [ ] Move word lists into subdir.
+ - [X] Clean it up.
+   - [X] TODO
+     - [X] hangman
+     - [X] FrequencyStrategy
+   - [X] template files
+
+ - [X] Move word lists into subdir.
    - data/
 
- - [ ] Send it.
+ - [X] Switch back to word-list
+
+ - [X] Send it.
 
 *** 999: future
 
@@ -1075,6 +1056,29 @@ All-the-words game takes 600 MB.
   memusg: peak=594832
 
 Try set intersections instead of regex/remove for incorrect letters.
+  updatePossibleWords() (just after cache check)
+      # try set intersection if possible
+      # elif trying set intersection: # TODO
+         # key with latest bad guess
+         # check for key in cache
+         # set intersection!
+
+  second pre-seed for seedCache:
+               # TODO - pre-seed two misses as well?
+  #            # determine second guess letter
+  #            letter = self.letterStrategy(self.wordCache[k], set(letter), 1000)
+  #
+  #            # weed down to just failures
+  #            noLetter = self.wordCache[k].copy()
+  #            for word in self.wordCache[k].words:
+  #               if letter in word:
+  #                  noLetter.words.remove(word)
+  #            noLetter.updated()
+  #
+  #            # save to cache with new key
+  #            key = HangmanGame.MYSTERY_LETTER * len(word) + "!" + letter
+  #            self.wordCache[key] = noLetter
+  #            util.DBG("pre-cached: " + key, DEBUG)
 
 Try not updating the letterFreq for guesses with a word set > N.
   - Or only updating every other time. 

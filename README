@@ -200,6 +200,12 @@ number of max guesses:
 Secret Option
 -------------
 
+Lazy-via-bash way:
+  python3 hangman.py -t data/words.txt `cat data/15.txt | tr "\n" " "`
+
+
+Not as lazy way:
+
 If you have, say, 1000 words you want hangman.py to guess and would rather use a
 file than type them all out on the command line, then open hangman.py in a text
 editor and change this:
