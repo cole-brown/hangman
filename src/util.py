@@ -7,12 +7,25 @@ import os
 # Prints stuff
 #-------------------------------------------------------------------------------
 def DBG(printable, printFlag=True, prefix=None):
-   """No one likes bugs..."""
+   """Prints printable to stdout if printFlag is True. If prefix != None,
+   prints: prefix + " " + printable."""
    if printFlag:
       if prefix:
          print(prefix, printable)
       else:
          print(printable)
+
+
+#-------------------------------------------------------------------------------
+# Pretty print file size
+#-------------------------------------------------------------------------------
+def pretty_size(num):
+   """Returns a string of the input bytes, prettily formatted for human reading. 
+   E.g. 2048 -> '2 KiB'"""
+   for x in ['bytes','KiB','MiB','GiB','TiB', 'PiB', 'EiB', 'ZiB', 'YiB']:
+      if num < 1024.0:
+         return "%3.1f %s" % (num, x)
+      num /= 1024.0
 
 
 #===============================================================================

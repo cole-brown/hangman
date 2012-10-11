@@ -1,0 +1,225 @@
+--------------------------------------------------------------------------------
+                                Factual Hangman
+--------------------------------------------------------------------------------
+                             Made for Python 3.3.0
+
+
+--------------
+Get It Running
+--------------
+
+   1) Install Python 3, if you don't have it. 
+
+      - http://www.python.org/getit/
+      - It's built for Python 3.3.0, but will probably work on any version 3.
+
+   2) Run it.
+
+      - If your /usr/bin/env has a python3, you can do this:
+        ./hangman.py
+
+      - Else, you'll have to do one of these:
+        python3 hangman.py
+        /path/to/python3 hangman.py
+        C:/path/to/python3 hangman.py
+
+
+----
+Info
+----
+
+  Strategy
+  --------
+
+I tried 3 strategies:
+  1) My first strategy was just to pick letters based on frequency in English. 
+  2) That was tweaked to use frequency in the set of current possible words. 
+  3) Also tried was a 'binary search' sort of strategy, where the letter closest
+     to being in half the words was used.
+
+Number 1 was by far the fastest, but number 2 turned out to be the best in terms
+of score, so I used it. The third paired down the possible words better, but because
+it guesses wrong more often, it tends to hit the (default) max 5 wrong guesses
+more often, which gives that word a score of 25, which really increases the
+average score for 1000 games (14.667 for 1000 words instead of #2's 7.801).
+
+Word guessing strategy is simple: Only guess words if winning is guaranteed that way.
+I tried something slightly more complex, but score and time went up, so it went back
+to being simple.
+
+
+  Optimizing
+  ----------
+
+I spent all my time optimizing hangman.py's average game time for 1000
+words. Initially it would've taken about 8 minutes to run 1000 words. I've 
+gotten that down to 14 seconds.
+
+  1) Found the longest time was the first stab at updating the possible words
+     set.  So I changed the initial word set from all the words to all the words
+     of the correct length.
+     - Improvement was 6.9 sec -> 3.5 sec for 15 words.
+       - ~8 min to ~4 mins for 1000
+  2) The next long pole was counting letters for the letter frequency list.
+     Switching from a for loop to map + list comprehension cut the time it took
+     to do that in half.
+     - Improvement was 3.5 sec -> 2.1 sec for 15 words.
+       - ~4 min to ~2.2 mins for 1000
+  3) Then I added a cache and pre-seeded it for first-guess failure.
+     - Improvement was 2.1 sec -> 1.85 sec for 15 words.
+       - ~2.2 min to 16 sec for 1000
+  4) Finally, I switched from 2 regexes to 1 smarter regex.
+     - Improvement was negligible for 15 words.
+       - 16 sec to 14 sec for 1000
+
+Currently there are 2 parts that are the long poles:
+  - Iterating over the set and removing words that don't meet the regex.
+    - Possible solution is to use something other than a set.
+  - Counting letters for the letter frequency list (#2 again, yes).
+    - Possible solutions:
+      - Find/make something faster than collections.Counter().
+      - Don't redo the letter frequency every guess (to start with). The first
+        few guesses take 90% of the time, since the set of words to work 
+        through is huge. Skipping the letter freq generation would speed things
+        up and might not impact score that much.
+
+Also of issue is the cache. It saves everything, so the process's memory usage
+just grows and grows as the games go on. Some sort of cache decay is needed
+if the memory usage needs to be kept low. On the plus side, all those cache
+hits really help the speed.
+  - Per-game averages:
+    - 1000   words: 0.012574 sec
+    - 173528 words: 0.003475 sec
+
+I really want to rewrite it in Go. With Python, you're basically stuck with
+serial due to the Global Interpreter Lock. In Go, I could have goroutine worker
+pools chew through the possible words set much faster, I think.
+
+More optimizing could be done, especially in memory usage, but the deadline I set is
+here so here it stands.
+
+
+
+-------
+Options
+-------
+
+Here's the help:
+  $ ./hangman.py -h
+  usage: hangman.py [-h] [-g GUESSES] [-v] [-t] dictionary words [words ...]
+  
+  positional arguments:
+    dictionary            read dictionary in from file
+    words                 list of words to play hangman on
+  
+  optional arguments:
+    -h, --help            show this help message and exit
+    -g GUESSES, --guesses GUESSES
+                          max number of wrong guesses
+    -v, --verbose         increase output verbosity (-vv for extra verbose)
+    -t, --time            print timing info
+
+
+Basically, if your dictionary file is called 'words.txt', you can do this:
+  $ ./hangman.py words.txt comaker
+  average score: 10.0
+
+
+But that's boring. Make it very verbose for something more interesting.
+  $ ./hangman.py -vv words.txt comaker
+  -----E-; score=1; status=KEEP_GUESSING
+  -----ER; score=2; status=KEEP_GUESSING
+  -----ER; score=3; status=KEEP_GUESSING
+  ---A-ER; score=4; status=KEEP_GUESSING
+  ---A-ER; score=5; status=KEEP_GUESSING
+  ---A-ER; score=6; status=KEEP_GUESSING
+  --MA-ER; score=7; status=KEEP_GUESSING
+  --MAKER; score=8; status=KEEP_GUESSING
+  --MAKER; score=9; status=KEEP_GUESSING
+  -OMAKER; score=10; status=KEEP_GUESSING
+  COMAKER; score=10; status=GAME_WON
+  COMAKER = 10
+  average score: 10.0
+
+
+If you have more games, go for just regular verbose:
+  $ ./hangman.py -v words.txt comaker cumulate factual monadism mus nagging oses remembered stereoisomers toxics
+  COMAKER = 10
+  CUMULATE = 8
+  FACTUAL = 10
+  MONADISM = 6
+  MUS = 25
+  NAGGING = 4
+  OSES = 4
+  REMEMBERED = 4
+  STEREOISOMERS = 3
+  TOXICS = 10
+  average score: 8.400000000000002
+
+
+The -t option gives you time info:
+  $ ./hangman.py -t words.txt comaker cumulate factual monadism mus nagging oses remembered stereoisomers toxics
+  average score: 8.400000000000002
+  init took:         01.262286 sec.
+  average game time: 00.031276 sec.
+  total time:        00.312941 sec.
+
+
+If Hangman is having a hard time with your word, you can use -g to increase the 
+number of max guesses:
+  $ ./hangman.py -vv words.txt mus
+  ---; score=1; status=KEEP_GUESSING
+  ---; score=2; status=KEEP_GUESSING
+  ---; score=3; status=KEEP_GUESSING
+  ---; score=4; status=KEEP_GUESSING
+  -U-; score=5; status=KEEP_GUESSING
+  -U-; score=6; status=KEEP_GUESSING
+  -U-; score=25; status=GAME_LOST
+  MUS = 25
+  average score: 25.0
+
+  $ ./hangman.py -vv -g 10 words.txt mus
+  ---; score=1; status=KEEP_GUESSING
+  ---; score=2; status=KEEP_GUESSING
+  ---; score=3; status=KEEP_GUESSING
+  ---; score=4; status=KEEP_GUESSING
+  -U-; score=5; status=KEEP_GUESSING
+  -U-; score=6; status=KEEP_GUESSING
+  -U-; score=7; status=KEEP_GUESSING
+  -U-; score=8; status=KEEP_GUESSING
+  -U-; score=9; status=KEEP_GUESSING
+  MU-; score=10; status=KEEP_GUESSING
+  MU-; score=11; status=KEEP_GUESSING
+  MUS; score=12; status=GAME_WON
+  MUS = 12
+  average score: 25.0
+
+
+
+-------------
+Secret Option
+-------------
+
+If you have, say, 1000 words you want hangman.py to guess and would rather use a
+file than type them all out on the command line, then open hangman.py in a text
+editor and change this:
+
+  #      parser.add_argument("words",
+  #                          help="read game words in from file")
+        parser.add_argument("words", nargs="+", 
+                            help="list of words to play hangman on")
+
+to this:
+
+        parser.add_argument("words",
+                            help="read game words in from file")
+  #      parser.add_argument("words", nargs="+", 
+  #                          help="list of words to play hangman on")
+
+And then you can do this:
+
+  $ ./hangman.py -t words.txt 1000.txt
+  average score: 7.8011988011987885
+  init took:         01.240373 sec.
+  average game time: 00.012194 sec.
+  total time:        12.223275 sec.

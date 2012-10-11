@@ -39,6 +39,6 @@ class GuessLetter:
 #-------------------------------------------------------------------------------
 #===============================================================================
 if __name__ == '__main__':
-   print("Hello, World. This is GuessLetter. Nothing to do here... yet.")
+   print("GuessLetter: Nothing to do here...")
 
 # Fin

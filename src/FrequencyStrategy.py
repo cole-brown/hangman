@@ -8,7 +8,8 @@ import collections
 
 # local imports
 if __name__ == '__main__':
-   # this way so I can run this as main to test stuff,
+   # This way so it can be run as main for quick testing.
+   # If we had a setup.py and installed this, it wouldn't be needed.
    from GuessLetter import GuessLetter
    from GuessWord import GuessWord
    from HangmanGame import HangmanGame
@@ -29,17 +30,15 @@ TIMING = False # TODO True for now
 # CLASS
 #===============================================================================
 class FrequencyStrategy:
-   """Guesses frequent-in-English letters first, then switches to
-   popular-amongst-possible-words letters, then guesses the words"""
+   """Guesses letters based on which occurs in most of the popular"""
+
+   #---
    # CLASS CONSTANTS
+   #---
 
    # don't pre-seed cache for word sets smaller than this
-   SEED_MIN = 10 # TODO - play around to find good number
+   SEED_MIN = 10
 
-   # Based on:
-   # http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
-   # TODO - remove?
-   POPULAR_LETTERS = list("ETAOINSRHDLUCMFYWGPBVKXQJZ")
 
    #-----------------------------------------------------------------------------
    # ctor
@@ -59,26 +58,19 @@ class FrequencyStrategy:
 
       self.newGame()
 
-      util.DBG("INIT DONE!!!!!!", True)
-
 
    #-----------------------------------------------------------------------------
    # pick a strategy
    #-----------------------------------------------------------------------------
    def nextGuess(self, game):
-      """better description""" #TODO
+      """Updates possible words based on previous guess, then decides whether
+      to guess a word or a letter, and returns the GuessWord/GuessLetter."""
 
       with util.Timer() as upTime:
          self.updatePossibleWords(game)
-# TODO - delete
-#         if self.firstRun:
-#            self.firstUpdatePossibleWords(game)
-#         else:
-#            self.updatePossibleWords(game)
-      util.DBG("    Update took %.09f sec." % upTime.interval, TIMING)
+      util.DBG("Update took %.09f sec." % upTime.interval, TIMING)
 
       # pick a strategy
-      # TODO - better decision?
       # if we can guess all the possible words and not lose, go for it.
       if len(self.possible) <= game.numWrongGuessesRemaining():
          return GuessWord(self.wordStrategy(game))
@@ -95,9 +87,10 @@ class FrequencyStrategy:
    # pick-a-word strategy
    #-----------------------------------------------------------------------------
    def wordStrategy(self, game):
-      """guess a word, based on possible words
+      """Guess a word, based on possible words
       return - the word to be guessed (string)"""
 
+      # sorted the word set for stable word scores
       for word in sorted(self.possible.words):
          if word not in game.getIncorrectlyGuessedWords():
             util.DBG("GUESS: " + word, DEBUG)
@@ -108,95 +101,76 @@ class FrequencyStrategy:
    # pick-a-letter strategy
    #-----------------------------------------------------------------------------
    def letterStrategy(self, wordSet, letterSet, guessesLeft):
-      """guess a letter, based on letter frequency in possible words
+      """Guess a letter, based on letter frequency in possible words
       return - the letter to be guessed (string)"""
 
       # speed test
-#      for letter in self.POPULAR_LETTERS:
+      # TODO remove
+#      for letter in self.list("ETAOINSRHDLUCMFYWGPBVKXQJZ"):
 #         if letter not in game.getAllGuessedLetters():
 #            return letter
 
       # Pick the first letter that hasn't been guessed.
       # Sort letterFreq for stable word scores by ensuring that 11 a's always
-      # get guessed before 11 b's.
-#      for letter, _ in wordSet.letterFreq.most_common(): # normal
-#      for letter, _ in sorted(wordSet.letterFreq.most_common(),
-#                              key=lambda lc: (-lc[1], lc[0])): # a-z
+      # get guessed after 11 b's. Turns out a-z gets worse scores than z-a
+      # in the test dictionary.
       for letter, _ in sorted(wordSet.letterFreq.most_common(),
                               key=lambda lc: (lc[1], lc[0]), reverse=True): # z-a
+                              #key=lambda lc: (-lc[1], lc[0])): # a-z
          if letter not in letterSet:
             util.DBG("GUESS: " + letter, DEBUG)
             util.DBG(" num: " + str(len(wordSet)), DEBUG)
             util.DBG(" letters: " + str(wordSet.letterFreq.most_common()), DEBUG)
             return letter
 
-      # TODO: raise error if entire alphabet has been guessed already?
-
-
-   #-----------------------------------------------------------------------------
-   # find possibilities
-   #-----------------------------------------------------------------------------
-   def firstUpdatePossibleWords(self, game):
-      """Narrow down the possible words based on length"""
-
-      # TODO - don't need?
-
-      self.firstRun = False
-      
-      # First time. Get a shallow copy of the proper length words.
-      self.possible = self.wordCache[self.key(game)].copy()
-            
-      util.DBG("Possibles: " + str(len(self.possible)) + " (Guesses Left: " + str(game.numWrongGuessesRemaining()) + ")", DEBUG)
-
 
    #-----------------------------------------------------------------------------
    # find possibilities
    #-----------------------------------------------------------------------------
    def updatePossibleWords(self, game):
-      """Uses the dictionary and current guess to narrow down the possible words"""
+      """Uses the dictionary and current guess to narrow down the possible words.
+      return - Nothing. Updates self vars."""
 
       # check the cache before doing any work
       if self.key(game) in self.wordCache:
          # It's there. Use it.
          self.possible = self.wordCache[self.key(game)].copy()
-         if len(self.possible) > game.numWrongGuessesRemaining(): # TODO DEBUG
-            util.DBG("non-word-guess cache hit: " + self.key(game), DEBUG)
          return
+      # try set intersection if possible
+      elif False: # TODO
+         # key with latest bad guess
+         # check for key in cache
+         # set intersection!
+         pass
 
-      # turn current guess into a regex
-      current = list(game.getGuessedSoFar())
+      # Set to use in the regex. Either any caps letter, 
+      # or not the incorrect letters.
+      wrongLetters = game.getIncorrectlyGuessedLetters()
+      if wrongLetters:
+         notWrongLetters = "[^" + "".join(wrongLetters) + "]{"
+      else:
+         notWrongLetters = "[A-Z]{"
+
+      # turn guessedSoFar into a regex using notWrongLetters
+      current = re.compile("(" + HangmanGame.MYSTERY_LETTER + 
+                           "+|[A-Z]+)").findall(game.getGuessedSoFar())
+      for i in range(len(current)):
+         if current[i][0] == HangmanGame.MYSTERY_LETTER:
+            current[i] = notWrongLetters + str(len(current[i])) + "}"
+
       # match() only matches at start of string so add a final "$" to make sure
       # it's a whole match and we're not saying "c-t" matches "catapult"
       current.append("$") 
-#      util.DBG("".join(current), DEBUG)
-      for i in range(len(current)):
-         if current[i] == HangmanGame.MYSTERY_LETTER:
-            # convert to any-letter regex
-            current[i] = '[A-Z]{1}'
-#      util.DBG("".join(current), DEBUG)
       guessRegex = re.compile("".join(current))
-
-      # turn incorrectly guessed letters into a regex
-      wrongLetters = game.getIncorrectlyGuessedLetters()
-      wrongRegex = None
-      if wrongLetters:
-         wrongRegex = re.compile("[" + "".join(wrongLetters) + "]+")
-
-      # TODO something for un-possible words
 
       # need a (different) set to iterate over whist I remove words
       # from the possible set
       tempPossibles = self.possible.words.copy()
 
       # test each word in the possibilites set
-#      util.DBG("Possibles pre: " + str(len(self.possible)), DEBUG)
       for word in tempPossibles:
          # purge words that can't match current guess
          if guessRegex.match(word) == None:
-            self.possible.words.remove(word)
-
-         # purge words containing incorrectly guessed letters
-         elif wrongRegex != None and wrongRegex.search(word) != None:
             self.possible.words.remove(word)
 
       # inform the WordSet that it's been updated
@@ -204,8 +178,6 @@ class FrequencyStrategy:
 
       # cache results
       self.cache(game)
-
-      util.DBG("Possibles: " + str(len(self.possible)) + " (Guesses Left: " + str(game.numWrongGuessesRemaining()) + ")", DEBUG)
 
 
    #-----------------------------------------------------------------------------
@@ -226,7 +198,6 @@ class FrequencyStrategy:
       """Saves current self.possible to cache."""
 
       # save to dict
-      util.DBG(self.key(game) + ": " + str(len(self.possible)), DEBUG)
       self.wordCache[self.key(game)] = self.possible.copy()
 
    #-----------------------------------------------------------------------------
@@ -245,10 +216,12 @@ class FrequencyStrategy:
    def parseWordsFile(self, filepath):
       """Reads the dictionary and places each word into the words cache.
       Dictionary file must be one word per line.
+      Does not verify the words (i.e. does not check that they've only got 
+      letters in them).
       exception - IOError if file can't be found/opened/read"""
 
       with open(filepath, 'r') as dictionary: 
-         util.DBG(pretty_size(os.path.getsize(filepath)), DEBUG)
+         util.DBG(util.pretty_size(os.path.getsize(filepath)), DEBUG)
 
          # read words file into set
          for line in dictionary:
@@ -267,7 +240,7 @@ class FrequencyStrategy:
    #-----------------------------------------------------------------------------
    def seedCache(self):
       """Pre-compute misses for common letters."""
-
+      # TODO - does this speed things up much?
       emptySet = set() # used to get letterStrategy's first guess
       temp = self.wordCache.copy() # can't add to what we're iterating over, so temp
       for k in temp:
@@ -288,25 +261,21 @@ class FrequencyStrategy:
             self.wordCache[key] = noLetter
             util.DBG("pre-cached: " + key, DEBUG)
 
-      # TODO - pre-seed two misses as well?
-
-
-
-
-#===============================================================================
-# Functions that are cool enough not to need a class
-#===============================================================================
-  
-#-------------------------------------------------------------------------------
-# pretty_size: I'm so pretty~ Oh so pretty~
-#-------------------------------------------------------------------------------
-def pretty_size(num):
-   """Returns a string of the input bytes, prettily formatted for human reading. 
-   E.g. 2048 -> '2 KiB'"""
-   for x in ['bytes','KiB','MiB','GiB','TiB', 'PiB', 'EiB', 'ZiB', 'YiB']:
-      if num < 1024.0:
-         return "%3.1f %s" % (num, x)
-      num /= 1024.0
+             # TODO - pre-seed two misses as well?
+#            # determine second guess letter
+#            letter = self.letterStrategy(self.wordCache[k], set(letter), 1000)
+#
+#            # weed down to just failures
+#            noLetter = self.wordCache[k].copy()
+#            for word in self.wordCache[k].words:
+#               if letter in word:
+#                  noLetter.words.remove(word)
+#            noLetter.updated()
+#
+#            # save to cache with new key
+#            key = HangmanGame.MYSTERY_LETTER * len(word) + "!" + letter
+#            self.wordCache[key] = noLetter
+#            util.DBG("pre-cached: " + key, DEBUG)
 
 
 
@@ -319,6 +288,5 @@ def pretty_size(num):
 if __name__ == '__main__':
    strat = FrequencyStrategy("words.txt")
    print("aa" in strat.wordCache)
-   print(strat.POPULAR_LETTERS)
 
 # Fin

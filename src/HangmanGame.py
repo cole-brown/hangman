@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 #
 
-# Python imports
-###import java.util.Collections;
-###import java.util.HashSet;
-###import java.util.Set;
-
-# local imports
-
 #===============================================================================
 # CLASS
 #===============================================================================

@@ -983,10 +983,102 @@ GUESS: O
 -OMAKER; score=10; status=KEEP_GUESSING
 COMAKER; score=10; status=GAME_WON
 
-*** 999: profile
-*** 999: underscores
+*** done 024: faster regex
+    closed: [2012-10-10 Wed 01:19]
 
-Use underscores in FreqStrat to denote "private" funcs/class vars?
+Use one instead of 2.
+
+Compact the one to see if it's faster.
+
+Before:
+  15:
+    Average game time: 0.040141757 sec.
+    real	0m1.996s
+  1000:
+    Average game time: 0.014569002 sec.
+    real	0m16.038s
+After:
+  15:
+    Average game time: 0.037995275 sec.
+    real	0m1.970s
+  1000:
+    Average game time: 0.014188456 sec.
+    real	0m15.639s
+After after:
+  15:
+    Average game time: 0.034805250 sec.
+    real	0m1.925s
+  1000:
+    Average game time: 0.012961594 sec.
+    real	0m14.435s
+
+*** done 025: clean-up
+    closed: [2012-10-10 Wed 17:31]
+
+Make pretty!
+
+- To Do [8/8]
+  - [X] HangmanGame
+  - [X] GuessFoo
+  - [X] util
+  - [X] WordSet
+  - [X] FrequencyStrategy
+    - ish
+      - Saving some for finale
+  - [X] hangman.py
+  - [X] ack TODO
+  - [X] catch assertion?
+    - I check game's status instead.
+
+*** done 026: try different SEED_MINs
+    closed: [2012-10-10 Wed 17:31]
+
+Doesn't seem to affect time much, changing that.
+
+*** done 027: README
+    closed: [2012-10-10 Wed 22:53]
+
+Install Python 3.3.0.
+
+Explain options.
+
+Explain how to switch to use file instead of list.
+
+Explain strategy & optimization.
+
+*** 028: clean-up finale [1/6]
+
+ - [X] Spell check README.
+
+ - [ ] Handle unable-to-guess-word better.
+
+ - [ ] Clean it up.
+
+ - [ ] Remove DBG() and timing?
+   - that aren't used
+
+ - [ ] Move word lists into subdir.
+   - data/
+
+ - [ ] Send it.
+
+*** 999: future
+
+Need some sort of cache decay so memory doesn't keep going up.
+All-the-words game takes 600 MB.
+  ../memusg python3 hangman.py -t words.txt words.txt
+  
+  average score: 7.740837213597154
+  init took:         01.246516 sec.
+  average game time: 00.003475 sec.
+  total time:        605.927172 sec.
+  memusg: peak=594832
+
+Try set intersections instead of regex/remove for incorrect letters.
+
+Try not updating the letterFreq for guesses with a word set > N.
+  - Or only updating every other time. 
+  - Or only updating if set has been reduced by more than half.
 
 *** 999: Parallel
 
